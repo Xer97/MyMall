@@ -13,8 +13,8 @@
         </constructor>
     </resultMap>
     <sql id="Base_Column_List">
-    id, user_id, product_id, quantity, checked, create_time, update_time
-  </sql>
+        id, user_id, product_id, quantity, checked, create_time, update_time
+    </sql>
     <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer">
         select
         <include refid="Base_Column_List"/>
@@ -22,17 +22,17 @@
         where id = #{id,jdbcType=INTEGER}
     </select>
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
-    delete from mmall_cart
-    where id = #{id,jdbcType=INTEGER}
-  </delete>
+        delete from mmall_cart
+        where id = #{id,jdbcType=INTEGER}
+    </delete>
     <insert id="insert" parameterType="com.xer97.mymall.pojo.Cart">
-    insert into mmall_cart (id, user_id, product_id, 
-      quantity, checked, create_time, 
-      update_time)
-    values (#{id,jdbcType=INTEGER}, #{userId,jdbcType=INTEGER}, #{productId,jdbcType=INTEGER}, 
-      #{quantity,jdbcType=INTEGER}, #{checked,jdbcType=INTEGER}, now(),
-      now())
-  </insert>
+        insert into mmall_cart (id, user_id, product_id,
+        quantity, checked, create_time,
+        update_time)
+        values (#{id,jdbcType=INTEGER}, #{userId,jdbcType=INTEGER}, #{productId,jdbcType=INTEGER},
+        #{quantity,jdbcType=INTEGER}, #{checked,jdbcType=INTEGER}, now(),
+        now())
+    </insert>
     <insert id="insertSelective" parameterType="com.xer97.mymall.pojo.Cart">
         insert into mmall_cart
         <trim prefix="(" suffix=")" suffixOverrides=",">
@@ -100,20 +100,68 @@
             <if test="createTime != null">
                 create_time = #{createTime,jdbcType=TIMESTAMP},
             </if>
-            <if test="updateTime != null">
-                update_time = now(),
-            </if>
+            update_time = now()
         </set>
         where id = #{id,jdbcType=INTEGER}
     </update>
     <update id="updateByPrimaryKey" parameterType="com.xer97.mymall.pojo.Cart">
-    update mmall_cart
-    set user_id = #{userId,jdbcType=INTEGER},
-      product_id = #{productId,jdbcType=INTEGER},
-      quantity = #{quantity,jdbcType=INTEGER},
-      checked = #{checked,jdbcType=INTEGER},
-      create_time = #{createTime,jdbcType=TIMESTAMP},
-      update_time = now()
-    where id = #{id,jdbcType=INTEGER}
+        update mmall_cart
+        set user_id = #{userId,jdbcType=INTEGER},
+        product_id = #{productId,jdbcType=INTEGER},
+        quantity = #{quantity,jdbcType=INTEGER},
+        checked = #{checked,jdbcType=INTEGER},
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+        update_time = now()
+        where id = #{id,jdbcType=INTEGER}
     </update>
+    <select id="selectByUseIdAndProductId" resultMap="BaseResultMap" parameterType="map">
+        select
+        <include refid="Base_Column_List"/>
+        from mmall_cart
+        where user_id = #{userId}
+        and product_id = #{productId}
+    </select>
+    <select id="selectByUserId" resultMap="BaseResultMap" parameterType="int">
+        select
+        <include refid="Base_Column_List"/>
+        from mmall_cart
+        where user_id = #{userId}
+    </select>
+    <select id="selectCartProductCheckStatusByUserId" parameterType="int" resultType="int">
+        select count(1)
+        from mmall_cart
+        where checked = 0
+        and user_id = #{userId}
+    </select>
+    <delete id="deleteByUserIdAndProductIds" parameterType="map">
+        delete from mmall_cart
+        where user_id = #{userId}
+        and product_id in
+        <foreach collection="productIdList" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <update id="checkedOrUncheckedProduct" parameterType="map">
+        update mmall_cart
+        set checked = #{checked},
+        update_time = now()
+        where user_id = #{userId}
+        <if test="productId != null">
+            and product_id = #{productId}
+        </if>
+    </update>
+
+    <select id="selectCartProductCount" parameterType="int" resultType="int">
+        select IFNULL(sum(quantity),0) as count
+        from mmall_cart
+        where user_id = #{userId}
+    </select>
+
+    <select id="selectCheckedCartByUserId" parameterType="int" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from mmall_cart
+        where user_id = #{userId}
+        and checked = 1
+    </select>
 </mapper>

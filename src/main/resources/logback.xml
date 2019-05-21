@@ -43,11 +43,10 @@
         </filter>
     </appender>
 
-    <logger name="com.xer97.mymall" additivity="false" level="INFO" >
-        <appender-ref ref="mymall" />
+    <logger name="com.xer97.mymall" additivity="false" level="INFO">
+        <appender-ref ref="mymall"/>
         <appender-ref ref="console"/>
     </logger>
-
 
 
     <!-- geelynote mybatis log 日志 -->

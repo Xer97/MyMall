@@ -6,12 +6,12 @@ import com.xer97.mymall.common.TokenCache;
 import com.xer97.mymall.dao.UserMapper;
 import com.xer97.mymall.pojo.User;
 import com.xer97.mymall.service.IUserService;
-import com.xer97.mymall.util.MD5Util;
-import net.sf.jsqlparser.schema.Server;
+import com.xer97.mymall.util.Md5Util;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -30,8 +30,8 @@ public class UserServiceImpl implements IUserService {
         if (resultCount == 0) {
             return ServerResponse.createByErrorMessage("用户名不存在");
         }
-        //MD5加密
-        String md5Password = MD5Util.MD5EncodeUtf8(password);
+        // MD5加密
+        String md5Password = Md5Util.md5EncodeUtf8(password);
         User user = userMapper.selectLogin(username, md5Password);
         if (user == null) {
             return ServerResponse.createByErrorMessage("密码错误");
@@ -55,10 +55,10 @@ public class UserServiceImpl implements IUserService {
             return vaildResponse;
         }
 
-        //设置角色
+        // 设置角色
         user.setRole(Const.Role.ROLE_CUSTOMER);
-        //MD5加密
-        String md5Password = MD5Util.MD5EncodeUtf8(user.getPassword());
+        // MD5加密
+        String md5Password = Md5Util.md5EncodeUtf8(user.getPassword());
         user.setPassword(md5Password);
         int resultCount = userMapper.insert(user);
         if (resultCount == 0) {
@@ -70,13 +70,13 @@ public class UserServiceImpl implements IUserService {
     @Override
     public ServerResponse<String> checkVaild(String str, String type) {
         if (StringUtils.isNotBlank(type)) {
-            if (type.equals(Const.EMAIL)) {
+            if (Objects.equals(type, Const.EMAIL)) {
                 int resultCount = userMapper.checkEmail(str);
                 if (resultCount > 0) {
                     return ServerResponse.createByErrorMessage("email已存在");
                 }
             }
-            if (type.equals(Const.USERNAME)) {
+            if (Objects.equals(type, Const.USERNAME)) {
                 int resultCount = userMapper.checkUsername(str);
                 if (resultCount > 0) {
                     return ServerResponse.createByErrorMessage("用户名已存在");
@@ -90,7 +90,7 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public ServerResponse<String> selectQuestion(String username) {
-        //先检查用户名是否存在
+        // 先检查用户名是否存在
         ServerResponse<String> response = checkVaild(username, Const.USERNAME);
         if (response.isSuccess()) {
             return ServerResponse.createByErrorMessage("用户不存在");
@@ -107,7 +107,7 @@ public class UserServiceImpl implements IUserService {
         int resultCount = userMapper.checkAnswer(username, question, answer);
         if (resultCount > 0) {
             String forgetToken = UUID.randomUUID().toString();
-            //将Token放入本地内存缓存
+            // 将Token放入本地内存缓存
             TokenCache.set(TokenCache.TOKEN_PREFIX + username, forgetToken);
             return ServerResponse.createBySuccess(forgetToken);
         }
@@ -128,8 +128,8 @@ public class UserServiceImpl implements IUserService {
             return ServerResponse.createByErrorMessage("token无效或过期");
         }
 
-        if (StringUtils.equals(forgetToken, token)) {
-            String md5Password = MD5Util.MD5EncodeUtf8(passwordNew);
+        if (Objects.equals(forgetToken, token)) {
+            String md5Password = Md5Util.md5EncodeUtf8(passwordNew);
             int rowCount = userMapper.updatePasswordByUsername(username, md5Password);
             if (rowCount > 0) {
                 return ServerResponse.createBySuccessMessage("修改密码成功");
@@ -141,12 +141,12 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public ServerResponse<String> resetPassword(String passwordOld, String passwordNew, User user) {
-        int resultCount = userMapper.checkPassword(MD5Util.MD5EncodeUtf8(passwordOld), user.getId());
+    public ServerResponse<String> resetPassword(String passwordOld, String passwordNew, Integer userId) {
+        int resultCount = userMapper.checkPassword(Md5Util.md5EncodeUtf8(passwordOld), userId);
         if (resultCount == 0) {
             return ServerResponse.createByErrorMessage("旧密码错误");
         }
-        int rowCount = userMapper.updatePasswordByPrimaryKey(user.getId(), MD5Util.MD5EncodeUtf8(passwordNew));
+        int rowCount = userMapper.updatePasswordByPrimaryKey(userId, Md5Util.md5EncodeUtf8(passwordNew));
         if (rowCount > 0) {
             return ServerResponse.createBySuccessMessage("密码修改成功");
         }
@@ -155,8 +155,8 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public ServerResponse<User> updateInformation(User user) {
-        //用户名不能更新
-        //检验email
+        // 用户名不能更新
+        // 检验email
         int resultCount = userMapper.checkEmailByUserId(user.getId(), user.getEmail());
         if (resultCount > 0) {
             return ServerResponse.createByErrorMessage("email已存在，请更换email");
@@ -183,5 +183,15 @@ public class UserServiceImpl implements IUserService {
         }
         user.setPassword(StringUtils.EMPTY);
         return ServerResponse.createBySuccess(user);
+    }
+
+    // backend
+
+    @Override
+    public ServerResponse<String> checkAdminRole(User user) {
+        if (user != null && user.getRole() == Const.Role.ROLE_ADMIN) {
+            return ServerResponse.createBySuccess();
+        }
+        return ServerResponse.createByError();
     }
 }

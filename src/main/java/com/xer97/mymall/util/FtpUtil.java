@@ -69,6 +69,8 @@ public class FtpUtil {
                 }
                 ftpClient.disconnect();
             }
+        }else{
+            logger.error("连接ftp失败");
         }
         return uploaded;
     }

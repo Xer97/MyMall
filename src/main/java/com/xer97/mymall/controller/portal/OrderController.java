@@ -11,6 +11,7 @@ import com.xer97.mymall.common.ServerResponse;
 import com.xer97.mymall.pojo.User;
 import com.xer97.mymall.service.IOrderService;
 import com.xer97.mymall.vo.OrderVO;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,9 +30,10 @@ import java.util.Map;
  */
 @Controller
 @RequestMapping("/order/")
+@Slf4j
 public class OrderController {
 
-    private static Logger logger = LoggerFactory.getLogger(OrderController.class);
+//    private static Logger logger = LoggerFactory.getLogger(OrderController.class);
 
     @Autowired
     private IOrderService iOrderService;
@@ -118,7 +120,7 @@ public class OrderController {
             }
             params.put(name, sb.toString());
         }
-        logger.info("支付宝回调,sign:{},trade_status:{},参数:{}", params.get("sign"), params.get("trade_status"), params.toString());
+        log.info("支付宝回调,sign:{},trade_status:{},参数:{}", params.get("sign"), params.get("trade_status"), params.toString());
         // 验证支付宝回调的正确性，并避免重复通知
         params.remove("sign_type");
         try {
@@ -127,7 +129,7 @@ public class OrderController {
                 return ServerResponse.createByErrorMessage("非法请求，验证不通过");
             }
         } catch (AlipayApiException e) {
-            logger.error("支付宝回调验证异常", e);
+            log.error("支付宝回调验证异常", e);
         }
         // TODO 验证各种数据
 
